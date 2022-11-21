@@ -55,7 +55,7 @@ export const config: UserConfig = {
   description: 'a Vue 3 based component library for designers and developers',
   lastUpdated: true,
   head,
-  // base: '/sh-element-plus/',
+  base: '/sh-element-plus/',
   themeConfig: {
     repo: REPO_PATH,
     docsBranch: REPO_BRANCH,

@@ -8,10 +8,6 @@ import {
 import type { ExtractPropTypes } from 'vue'
 
 export const imageProps = buildProps({
-  appendToBody: {
-    type: Boolean,
-    default: undefined,
-  },
   hideOnClickModal: {
     type: Boolean,
     default: false,
@@ -24,6 +20,10 @@ export const imageProps = buildProps({
     type: String,
     values: ['', 'contain', 'cover', 'fill', 'none', 'scale-down'],
     default: '',
+  },
+  loading: {
+    type: String,
+    values: ['eager', 'lazy'],
   },
   lazy: {
     type: Boolean,
@@ -59,8 +59,10 @@ export const imageProps = buildProps({
 export type ImageProps = ExtractPropTypes<typeof imageProps>
 
 export const imageEmits = {
+  load: (evt: Event) => evt instanceof Event,
   error: (evt: Event) => evt instanceof Event,
   switch: (val: number) => isNumber(val),
   close: () => true,
+  show: () => true,
 }
 export type ImageEmits = typeof imageEmits

@@ -1,10 +1,12 @@
+// @ts-nocheck
 import { markRaw, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, test, vi } from 'vitest'
 import { EVENT_CODE } from '@element-plus/constants'
-import { ArrowUp, CaretTop, CircleClose } from '@element-plus/icons-vue'
+import { ArrowDown, CaretTop, CircleClose } from '@element-plus/icons-vue'
 import { POPPER_CONTAINER_SELECTOR } from '@element-plus/hooks'
 import { hasClass } from '@element-plus/utils'
+import { ElFormItem } from '@element-plus/components/form'
 import Select from '../src/select.vue'
 import Group from '../src/option-group.vue'
 import Option from '../src/option.vue'
@@ -34,6 +36,7 @@ interface SelectProps {
   popperClass?: string
   defaultFirstOption?: boolean
   fitInputWidth?: boolean
+  size?: 'small' | 'default' | 'large'
 }
 
 const _mount = (template: string, data: any = () => ({}), otherObj?) =>
@@ -43,6 +46,7 @@ const _mount = (template: string, data: any = () => ({}), otherObj?) =>
         'el-select': Select,
         'el-option': Option,
         'el-group-option': Group,
+        'el-form-item': ElFormItem,
       },
       template,
       data,
@@ -124,6 +128,7 @@ const getSelectVm = (configs: SelectProps = {}, options?) => {
       :loading="loading"
       :remoteMethod="remoteMethod"
       :automatic-dropdown="automaticDropdown"
+      :size="size"
       :fit-input-width="fitInputWidth">
       <el-option
         v-for="item in options"
@@ -151,6 +156,7 @@ const getSelectVm = (configs: SelectProps = {}, options?) => {
       remote: configs.remote,
       remoteMethod: configs.remoteMethod,
       value: configs.multiple ? [] : '',
+      size: configs.size || 'default',
     })
   )
 }
@@ -237,7 +243,6 @@ const getGroupSelectVm = (configs: SelectProps = {}, options?) => {
       },
     ]
   }
-
   return _mount(
     `
     <el-select
@@ -256,7 +261,7 @@ const getGroupSelectVm = (configs: SelectProps = {}, options?) => {
       :remoteMethod="remoteMethod"
       :automatic-dropdown="automaticDropdown"
       :fit-input-width="fitInputWidth">
-      <el-group-option
+     <el-group-option
         v-for="group in options"
         :key="group.label"
         :disabled="group.disabled"
@@ -305,6 +310,7 @@ describe('Select', () => {
     expect(wrapper.classes()).toContain('el-select')
     expect(findInnerInput().placeholder).toBe('Select')
     const select = wrapper.findComponent({ name: 'ElSelect' })
+    await select.trigger('mouseenter')
     await select.trigger('click')
     await nextTick()
     expect((select.vm as any).visible).toBe(true)
@@ -367,7 +373,7 @@ describe('Select', () => {
         <el-option
           v-for="item in options"
           :label="item.label"
-          :key="item.value"
+          :key="item.value.value"
           :value="item.value">
         </el-option>
       </el-select>
@@ -375,16 +381,84 @@ describe('Select', () => {
       () => ({
         options: [
           {
-            value: '选项1',
+            value: {
+              value: '选项1',
+            },
             label: '黄金糕',
           },
           {
-            value: '选项2',
+            value: {
+              value: '选项2',
+            },
             label: '双皮奶',
           },
         ],
         value: {
           value: '选项2',
+        },
+      })
+    )
+    await nextTick()
+
+    expect(findInnerInput().value).toBe('双皮奶')
+  })
+
+  test('custom label', async () => {
+    wrapper = _mount(
+      `
+      <el-select v-model="value">
+        <el-option
+          v-for="item in options"
+          :label="item.name"
+          :key="item.id"
+          :value="item.id">
+        </el-option>
+      </el-select>
+    `,
+      () => ({
+        options: [
+          {
+            id: 1,
+            name: '黄金糕',
+          },
+          {
+            id: 2,
+            name: '双皮奶',
+          },
+        ],
+        value: 2,
+      })
+    )
+    await nextTick()
+
+    expect(findInnerInput().value).toBe('双皮奶')
+  })
+
+  test('custom label with object', async () => {
+    wrapper = _mount(
+      `
+      <el-select v-model="value" value-key="id">
+        <el-option
+          v-for="item in options"
+          :label="item.name"
+          :key="item.id"
+          :value="item">
+        </el-option>
+      </el-select>
+    `,
+      () => ({
+        options: [
+          {
+            id: 1,
+            name: '黄金糕',
+          },
+          {
+            id: 2,
+            name: '双皮奶',
+          },
+        ],
+        value: {
+          id: 2,
         },
       })
     )
@@ -667,10 +741,22 @@ describe('Select', () => {
 
   test('suffix icon', async () => {
     wrapper = _mount(`<el-select></el-select>`)
-    let suffixIcon = wrapper.findComponent(ArrowUp)
+    let suffixIcon = wrapper.findComponent(ArrowDown)
     expect(suffixIcon.exists()).toBe(true)
     await wrapper.setProps({ suffixIcon: markRaw(CaretTop) })
     suffixIcon = wrapper.findComponent(CaretTop)
+    expect(suffixIcon.exists()).toBe(true)
+  })
+
+  test('test remote show suffix', async () => {
+    wrapper = _mount(`<el-select></el-select>`)
+    await wrapper.setProps({
+      remote: true,
+      filters: true,
+      remoteShowSuffix: true,
+    })
+
+    const suffixIcon = wrapper.findComponent(ArrowDown)
     expect(suffixIcon.exists()).toBe(true)
   })
 
@@ -1000,9 +1086,9 @@ describe('Select', () => {
     await nextTick()
     const triggerWrappers = wrapper.findAll('.el-tooltip__trigger')
     expect(triggerWrappers[0]).toBeDefined()
-    const tags = wrapper.findAll('.el-select__tags-text')
-    expect(tags.length).toBe(5)
-    expect(tags[4].element.textContent).toBe('蚵仔煎')
+    const tags = document.querySelectorAll('.el-select__tags-text')
+    expect(tags.length).toBe(4)
+    expect(tags[3].textContent).toBe('蚵仔煎')
   })
 
   test('multiple remove-tag', async () => {
@@ -1097,7 +1183,7 @@ describe('Select', () => {
     expect(handleBlur).toHaveBeenCalled()
   })
 
-  test('event:focus & blur for multile & filterable select', async () => {
+  test('event:focus & blur for multiple & filterable select', async () => {
     const handleFocus = vi.fn()
     const handleBlur = vi.fn()
     wrapper = _mount(
@@ -1192,6 +1278,7 @@ describe('Select', () => {
       () => ({ value: 'test' })
     )
     const vm = wrapper.vm as any
+    await wrapper.trigger('mouseenter')
     await wrapper.trigger('click')
     const selectVm = wrapper.findComponent({ name: 'ElSelect' }).vm as any
     expect(selectVm.visible).toBe(true)
@@ -1271,6 +1358,7 @@ describe('Select', () => {
       })
     )
     const select = wrapper.findComponent({ name: 'ElSelect' })
+    await select.trigger('mouseenter')
     await select.trigger('click')
     await nextTick()
     expect(
@@ -1669,11 +1757,27 @@ describe('Select', () => {
       clearable: true,
     })
     const select = wrapper.findComponent({ name: 'ElSelect' })
+    await select.trigger('mouseenter')
     const suffixIcon = select.find('.el-input__suffix')
     await suffixIcon.trigger('click')
     expect((select.vm as any).visible).toBe(true)
     await suffixIcon.trigger('click')
     expect((select.vm as any).visible).toBe(false)
+  })
+
+  test('mouseenter click', async () => {
+    wrapper = getSelectVm({
+      filterable: true,
+      clearable: true,
+    })
+    const select = wrapper.findComponent({ name: 'ElSelect' })
+
+    await select.trigger('click')
+    expect((select.vm as any).visible).toBe(false)
+
+    await select.trigger('mouseenter')
+    await select.trigger('click')
+    expect((select.vm as any).visible).toBe(true)
   })
 
   describe('should show all options when open select dropdown', () => {
@@ -1741,6 +1845,7 @@ describe('Select', () => {
       const secondInputLetter = 'aa'
 
       await nextTick()
+      await wrapper.trigger('mouseenter')
 
       const input = wrapper.find(
         multiple ? '.el-select__input' : '.el-input__inner'
@@ -1879,5 +1984,136 @@ describe('Select', () => {
     vm.value = []
     await nextTick()
     expect(selectVm.selectedLabel).toBe('')
+  })
+
+  test('should modify size height change', async () => {
+    wrapper = getSelectVm()
+
+    // large size
+    await wrapper.setProps({
+      size: 'large',
+    })
+    await nextTick(nextTick)
+    const inputEl = wrapper.find('input').element as HTMLDivElement
+    const sizeMap: Record<string, number> = {
+      small: 24,
+      default: 32,
+      large: 40,
+    }
+
+    for (const size in sizeMap) {
+      await wrapper.setProps({
+        size,
+      })
+      await nextTick(nextTick)
+      expect(inputEl.style.height).toEqual(`${sizeMap[size] - 2}px`)
+    }
+  })
+
+  describe('form item accessibility integration', () => {
+    it('automatic id attachment', async () => {
+      const wrapper = _mount(
+        `<el-form-item label="Foobar" data-test-ref="item">
+          <el-select v-model="modelValue">
+            <el-option label="1" value="1" />
+          </el-select>
+        </el-form-item>`,
+        () => ({
+          modelValue: 1,
+        })
+      )
+
+      await nextTick()
+      const formItem = wrapper.find('[data-test-ref="item"]')
+      const formItemLabel = formItem.find('.el-form-item__label')
+      const innerInput = wrapper.find('.el-input__inner')
+      expect(formItem.attributes().role).toBeFalsy()
+      expect(formItemLabel.attributes().for).toBe(innerInput.attributes().id)
+    })
+
+    it('specified id attachment', async () => {
+      const wrapper = _mount(
+        `<el-form-item label="Foobar" data-test-ref="item">
+          <el-select id="foobar" v-model="modelValue">
+            <el-option label="1" value="1" />
+          </el-select>
+        </el-form-item>`,
+        () => ({
+          modelValue: 1,
+        })
+      )
+
+      await nextTick()
+      const formItem = wrapper.find('[data-test-ref="item"]')
+      const formItemLabel = formItem.find('.el-form-item__label')
+      const innerInput = wrapper.find('.el-input__inner')
+      expect(formItem.attributes().role).toBeFalsy()
+      expect(innerInput.attributes().id).toBe('foobar')
+      expect(formItemLabel.attributes().for).toBe(innerInput.attributes().id)
+    })
+
+    it('form item role is group when multiple inputs', async () => {
+      const wrapper = _mount(
+        `<el-form-item label="Foobar" data-test-ref="item">
+          <el-select v-model="modelValue">
+            <el-option label="1" value="1" />
+          </el-select>
+          <el-select v-model="modelValue">
+            <el-option label="1" value="1" />
+          </el-select>
+        </el-form-item>`,
+        () => ({
+          modelValue: 1,
+        })
+      )
+
+      await nextTick()
+      const formItem = wrapper.find('[data-test-ref="item"]')
+      expect(formItem.attributes().role).toBe('group')
+    })
+    // fix: 8544
+    it('When props are changed, label can be displayed correctly after selecting operation', async () => {
+      wrapper = getGroupSelectVm({}, [
+        {
+          label: 'group1',
+          options: [
+            { value: 0, label: 'x' },
+            { value: 1, label: 'y' },
+            { value: 2, label: 'z' },
+          ],
+        },
+      ])
+      await wrapper.find('.select-trigger').trigger('click')
+      let options = getOptions()
+      const vm = wrapper.vm as any
+      expect(vm.value).toBe('')
+      expect(findInnerInput().value).toBe('')
+      await nextTick()
+      options[1].click()
+      await nextTick()
+      expect(vm.value).toBe(1)
+      expect(findInnerInput().value).toBe('y')
+      wrapper.vm.options = [
+        {
+          label: 'group2',
+          options: [
+            { value: 0, label: 'x' },
+            { value: 1, label: 'y' },
+            { value: 2, label: 'z' },
+          ],
+        },
+      ]
+
+      await nextTick()
+      options = getOptions()
+      options[1].click()
+      await nextTick()
+      expect(vm.value).toBe(1)
+      expect(findInnerInput().value).toBe('y')
+      options[2].click()
+      await nextTick()
+      expect(vm.value).toBe(2)
+      expect(findInnerInput().value).toBe('z')
+    })
   })
 })

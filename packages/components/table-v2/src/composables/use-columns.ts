@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { computed, unref } from 'vue'
 import { isObject } from '@element-plus/utils'
 import { SortOrder, oppositeOrderMap } from '../constants'
@@ -64,7 +65,7 @@ function useColumns(
 
     return _columns.reduce<Record<Column<any>['key'], CSSProperties>>(
       (style, column) => {
-        style[column.key] = calcColumnStyle(column, unref(fixed))
+        style[column.key] = calcColumnStyle(column, unref(fixed), props.fixed)
         return style
       },
       {}

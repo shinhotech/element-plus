@@ -9,34 +9,37 @@ on:
 jobs:
   size-report:
     runs-on: ubuntu-latest
+
     env:
       CI_JOB_NUMBER: 1
+
     steps:
       - uses: actions/checkout@v3
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
 
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: 16
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-      - name: Cache ~/.pnpm-store
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-pnpm-store
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-publish-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-publish-${{ env.cache-name }}-
-            ${{ runner.os }}-publish-
-            ${{ runner.os }}-
+            ${{ runner.os }}-pnpm-store-
 
       - uses: preactjs/compressed-size-action@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           pattern: './dist/element-plus/dist/*.{js,mjs,css}'
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096

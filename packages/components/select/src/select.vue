@@ -3,13 +3,15 @@
     ref="selectWrapper"
     v-click-outside:[popperPaneRef]="handleClose"
     :class="wrapperKls"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
     @click.stop="toggleMenu"
   >
     <el-tooltip
       ref="tooltipRef"
-      v-model:visible="dropMenuVisible"
-      placement="bottom-start"
-      :teleported="compatTeleported"
+      :visible="dropMenuVisible"
+      :placement="placement"
+      :teleported="teleported"
       :popper-class="[nsSelect.e('popper'), popperClass]"
       :fallback-placements="['bottom-start', 'top-start', 'right', 'left']"
       :effect="effect"
@@ -22,7 +24,11 @@
       @show="handleMenuEnter"
     >
       <template #default>
-        <div class="select-trigger">
+        <div
+          class="select-trigger"
+          @mouseenter="inputHovering = true"
+          @mouseleave="inputHovering = false"
+        >
           <div
             v-if="multiple"
             ref="tags"
@@ -44,11 +50,9 @@
                 disable-transitions
                 @close="deleteTag($event, selected[0])"
               >
-                <span
-                  :class="nsSelect.e('tags-text')"
-                  :style="{ maxWidth: inputWidth - 123 + 'px' }"
-                  >{{ selected[0].currentLabel }}</span
-                >
+                <span :class="nsSelect.e('tags-text')" :style="tagTextStyle">
+                  {{ selected[0].currentLabel }}
+                </span>
               </el-tag>
               <el-tag
                 v-if="selected.length > 1"
@@ -63,7 +67,7 @@
                   :fallback-placements="['bottom', 'top', 'right', 'left']"
                   :effect="effect"
                   placement="bottom"
-                  :teleported="false"
+                  :teleported="teleported"
                 >
                   <template #default>
                     <span :class="nsSelect.e('tags-text')"
@@ -73,7 +77,7 @@
                   <template #content>
                     <div :class="nsSelect.e('collapse-tags')">
                       <div
-                        v-for="(item, idx) in selected"
+                        v-for="(item, idx) in selected.slice(1)"
                         :key="idx"
                         :class="nsSelect.e('collapse-tag')"
                       >
@@ -155,7 +159,7 @@
               @keydown="resetInputState"
               @keydown.down.prevent="navigateOptions('next')"
               @keydown.up.prevent="navigateOptions('prev')"
-              @keydown.esc.stop.prevent="visible = false"
+              @keydown.esc="handleKeydownEscape"
               @keydown.enter.stop.prevent="selectOption"
               @keydown.delete="deletePrevTag"
               @keydown.tab="visible = false"
@@ -189,10 +193,8 @@
             @keydown.down.stop.prevent="navigateOptions('next')"
             @keydown.up.stop.prevent="navigateOptions('prev')"
             @keydown.enter.stop.prevent="selectOption"
-            @keydown.esc.stop.prevent="visible = false"
+            @keydown.esc="handleKeydownEscape"
             @keydown.tab="visible = false"
-            @mouseenter="inputHovering = true"
-            @mouseleave="inputHovering = false"
           >
             <template v-if="$slots.prefix" #prefix>
               <div
@@ -260,17 +262,19 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import {
   computed,
   defineComponent,
   nextTick,
-  onBeforeUnmount,
   onMounted,
   provide,
   reactive,
   toRefs,
   unref,
 } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
+import { placements } from '@popperjs/core'
 import { ClickOutside } from '@element-plus/directives'
 import { useFocus, useLocale, useNamespace } from '@element-plus/hooks'
 import ElInput from '@element-plus/components/input'
@@ -280,21 +284,15 @@ import ElTooltip, {
 import ElScrollbar from '@element-plus/components/scrollbar'
 import ElTag, { tagProps } from '@element-plus/components/tag'
 import ElIcon from '@element-plus/components/icon'
-import { useDeprecateAppendToBody } from '@element-plus/components/popper'
 import { CHANGE_EVENT, UPDATE_MODEL_EVENT } from '@element-plus/constants'
-import {
-  addResizeListener,
-  getComponentSize,
-  isValidComponentSize,
-  removeResizeListener,
-} from '@element-plus/utils'
-import { ArrowUp, CircleClose } from '@element-plus/icons-vue'
+import { iconPropType, isValidComponentSize } from '@element-plus/utils'
+import { ArrowDown, CircleClose } from '@element-plus/icons-vue'
 import ElOption from './option.vue'
 import ElSelectMenu from './select-dropdown.vue'
 import { useSelect, useSelectStates } from './useSelect'
 import { selectKey } from './token'
 
-import type { Component, PropType } from 'vue'
+import type { PropType } from 'vue'
 import type { ComponentSize } from '@element-plus/constants'
 import type { SelectContext } from './token'
 
@@ -369,17 +367,13 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    popperAppendToBody: {
-      type: Boolean,
-      default: undefined,
-    },
     teleported: useTooltipContentProps.teleported,
     persistent: {
       type: Boolean,
       default: true,
     },
     clearIcon: {
-      type: [String, Object] as PropType<string | Component>,
+      type: iconPropType,
       default: CircleClose,
     },
     fitInputWidth: {
@@ -387,11 +381,28 @@ export default defineComponent({
       default: false,
     },
     suffixIcon: {
-      type: [String, Object] as PropType<string | Component>,
-      default: ArrowUp,
+      type: iconPropType,
+      default: ArrowDown,
     },
     // eslint-disable-next-line vue/require-prop-types
     tagType: { ...tagProps.type, default: 'info' },
+    validateEvent: {
+      type: Boolean,
+      default: true,
+    },
+    remoteShowSuffix: {
+      type: Boolean,
+      default: false,
+    },
+    suffixTransition: {
+      type: Boolean,
+      default: true,
+    },
+    placement: {
+      type: String,
+      values: placements,
+      default: 'bottom-start',
+    },
   },
   emits: [
     UPDATE_MODEL_EVENT,
@@ -441,6 +452,7 @@ export default defineComponent({
       handleBlur,
       handleClearClick,
       handleClose,
+      handleKeydownEscape,
       toggleMenu,
       selectOption,
       getValueKey,
@@ -455,6 +467,8 @@ export default defineComponent({
       scrollbar,
       queryChange,
       groupQueryChange,
+      handleMouseEnter,
+      handleMouseLeave,
     } = useSelect(props, states, ctx)
 
     const { focus } = useFocus(reference)
@@ -498,6 +512,14 @@ export default defineComponent({
       width: '100%',
     }))
 
+    const tagTextStyle = computed(() => {
+      const maxWidth =
+        unref(inputWidth) > 123
+          ? unref(inputWidth) - 123
+          : unref(inputWidth) - 75
+      return { maxWidth: `${maxWidth}px` }
+    })
+
     provide(
       selectKey,
       reactive({
@@ -529,13 +551,7 @@ export default defineComponent({
       ) {
         currentPlaceholder.value = ''
       }
-      addResizeListener(selectWrapper.value as any, handleResize)
-      if (reference.value && reference.value.$el) {
-        const input = reference.value.input as HTMLInputElement
-        states.initialInputHeight =
-          input.getBoundingClientRect().height ||
-          getComponentSize(selectSize.value)
-      }
+      useResizeObserver(selectWrapper, handleResize)
       if (props.remote && props.multiple) {
         resetInputHeight()
       }
@@ -555,10 +571,6 @@ export default defineComponent({
       setSelected()
     })
 
-    onBeforeUnmount(() => {
-      removeResizeListener(selectWrapper.value as any, handleResize)
-    })
-
     if (props.multiple && !Array.isArray(props.modelValue)) {
       ctx.emit(UPDATE_MODEL_EVENT, [])
     }
@@ -569,11 +581,6 @@ export default defineComponent({
     const popperPaneRef = computed(() => {
       return tooltipRef.value?.popperRef?.contentRef
     })
-
-    const { compatTeleported } = useDeprecateAppendToBody(
-      COMPONENT_NAME,
-      'popperAppendToBody'
-    )
 
     return {
       tagInMultiLine,
@@ -621,6 +628,7 @@ export default defineComponent({
       handleBlur,
       handleClearClick,
       handleClose,
+      handleKeydownEscape,
       toggleMenu,
       selectOption,
       getValueKey,
@@ -638,8 +646,10 @@ export default defineComponent({
 
       wrapperKls,
       selectTagsStyle,
-      compatTeleported,
       nsSelect,
+      tagTextStyle,
+      handleMouseEnter,
+      handleMouseLeave,
     }
   },
 })

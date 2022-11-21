@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { buildProps, definePropType, iconPropType } from '@element-plus/utils'
 import { EVENT_CODE } from '@element-plus/constants'
 import { createCollectionWithScope } from '@element-plus/components/collection'
@@ -41,6 +42,7 @@ export const dropdownProps = buildProps({
     type: definePropType<Partial<Options>>(Object),
     default: () => ({}),
   },
+  id: String,
   size: {
     type: String,
     default: '',
@@ -52,6 +54,7 @@ export const dropdownProps = buildProps({
   },
   loop: {
     type: Boolean,
+    default: true,
   },
   showTimeout: {
     type: Number,
@@ -77,9 +80,14 @@ export const dropdownProps = buildProps({
     type: Boolean,
     default: false,
   },
+  role: {
+    type: String,
+    default: 'menu',
+  },
   buttonProps: {
     type: definePropType<ButtonProps>(Object),
   },
+  teleported: useTooltipContentProps.teleported,
 } as const)
 
 export const dropdownItemProps = buildProps({

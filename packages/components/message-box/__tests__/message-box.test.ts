@@ -1,6 +1,7 @@
+// @ts-nocheck
 import { markRaw } from 'vue'
 import { mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it, test } from 'vitest'
+import { afterEach, describe, expect, it, test, vi } from 'vitest'
 import { rAF } from '@element-plus/test-utils/tick'
 import { triggerNativeCompositeClick } from '@element-plus/test-utils/composite-click'
 import { QuestionFilled as QuestionFilledIcon } from '@element-plus/icons-vue'
@@ -9,6 +10,10 @@ import { ElMessageBox } from '..'
 
 const selector = '.el-overlay'
 const QuestionFilled = markRaw(QuestionFilledIcon)
+
+vi.mock('@element-plus/utils/error', () => ({
+  debugWarn: vi.fn(),
+}))
 
 const _mount = (invoker: () => void) => {
   return mount(
@@ -27,6 +32,7 @@ const _mount = (invoker: () => void) => {
 describe('MessageBox', () => {
   afterEach(async () => {
     MessageBox.close()
+    document.body.innerHTML = ''
     await rAF()
   })
 
@@ -141,6 +147,19 @@ describe('MessageBox', () => {
     await rAF()
     const msgbox: HTMLElement = document.querySelector(selector)
     expect(msgbox).toBe(null)
+  })
+
+  test('autofocus', async () => {
+    MessageBox.alert('这是一段内容', {
+      autofocus: false,
+      title: '标题名称',
+    })
+    await rAF()
+    const btnElm = document.querySelector(
+      '.el-message-box__btns .el-button--primary'
+    )
+    const haveFocus = btnElm.isSameNode(document.activeElement)
+    expect(haveFocus).toBe(false)
   })
 
   test('prompt', async () => {
@@ -258,6 +277,100 @@ describe('MessageBox', () => {
       expect(ElMessageBox._context).toBe(testContext._context)
       // clean up
       ElMessageBox._context = null
+    })
+  })
+
+  describe('append to', () => {
+    it('should append to body if parameter is not provided', () => {
+      MessageBox({
+        title: 'append to test',
+        message: 'append to test',
+      })
+      const msgbox: HTMLElement = document.querySelector(`body > ${selector}`)
+      expect(msgbox).toBeDefined()
+    })
+
+    it('should append to body if element does not exist', () => {
+      MessageBox({
+        title: 'append to test',
+        message: 'append to test',
+        appendTo: '.not-existing-selector',
+      })
+      const msgbox: HTMLElement = document.querySelector(`body > ${selector}`)
+      expect(msgbox).toBeDefined()
+    })
+
+    it('should append to HtmlElement provided', () => {
+      const htmlElement = document.createElement('div')
+      document.body.appendChild(htmlElement)
+      MessageBox({
+        title: 'append to test',
+        message: 'append to test',
+        appendTo: htmlElement,
+      })
+      const msgbox: HTMLElement = htmlElement.querySelector(selector)
+      expect(msgbox).toBeDefined()
+    })
+
+    it('should append to selector provided', () => {
+      const htmlElement = document.createElement('div')
+      htmlElement.className = 'custom-html-element'
+      document.body.appendChild(htmlElement)
+      MessageBox({
+        title: 'append to test',
+        message: 'append to test',
+        appendTo: '.custom-html-element',
+      })
+      const msgbox: HTMLElement = htmlElement.querySelector(selector)
+      expect(msgbox).toBeDefined()
+    })
+  })
+
+  describe('accessibility', () => {
+    test('title attribute should set aria-label', async () => {
+      const title = 'Hello World'
+      MessageBox({
+        type: 'success',
+        title,
+        message: '这是一段内容',
+      })
+      await rAF()
+      const msgbox: HTMLElement = document.querySelector(selector)!
+      const msgboxDialog = msgbox?.querySelector('[role="dialog"]')!
+      expect(msgboxDialog.getAttribute('aria-label')).toBe(title)
+      expect(msgboxDialog.getAttribute('aria-labelledby')).toBeFalsy()
+    })
+
+    test('aria-describedby should point to modal body when not prompt', async () => {
+      MessageBox({
+        type: 'success',
+        message: '这是一段内容',
+      })
+      await rAF()
+      const msgbox: HTMLElement = document.querySelector(selector)!
+      const msgboxDialog = msgbox.querySelector('[role="dialog"]')!
+      const msgboxContent = msgboxDialog.querySelector(
+        '.el-message-box__content'
+      )!
+      expect(msgboxDialog.getAttribute('aria-describedby')).toBe(
+        msgboxContent.getAttribute('id')
+      )
+    })
+
+    test('aria-describedby should not be used when prompt; label attached to input', async () => {
+      const message = '这是一段内容'
+      MessageBox.prompt(message, {
+        type: 'success',
+      })
+      await rAF()
+      const msgbox: HTMLElement = document.querySelector(selector)!
+      const msgboxDialog = msgbox.querySelector('[role="dialog"]')!
+      const label = msgboxDialog.querySelector('label')!
+      const input = msgboxDialog.querySelector('input')!
+
+      expect(msgboxDialog.getAttribute('aria-describedby')).toBeFalsy()
+      expect(label.getAttribute('for')).toBe(input.getAttribute('id'))
+      expect(label.textContent).toBe(message)
     })
   })
 })

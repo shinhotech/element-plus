@@ -5,7 +5,7 @@ import Carousel from '../src/carousel.vue'
 import CarouselItem from '../src/carousel-item.vue'
 
 import type { VueWrapper } from '@vue/test-utils'
-import type { CarouselInstance } from '../src/carousel'
+import type { CarouselInstance } from '../src/instance'
 
 const wait = (ms = 100) =>
   new Promise((resolve) => setTimeout(() => resolve(0), ms))
@@ -53,7 +53,7 @@ describe('Carousel', () => {
     expect(wrapper.findAll('.el-carousel__item').length).toEqual(3)
   })
 
-  it('auto play', async (done) => {
+  it('auto play', async () => {
     wrapper = createComponent({
       interval: 50,
     })
@@ -64,10 +64,9 @@ describe('Carousel', () => {
     expect(items[0].classList.contains('is-active')).toBeTruthy()
     await wait(60)
     expect(items[1].classList.contains('is-active')).toBeTruthy()
-    done()
   })
 
-  it('initial index', async (done) => {
+  it('initial index', async () => {
     wrapper = createComponent({
       autoplay: false,
       'initial-index': 1,
@@ -81,10 +80,9 @@ describe('Carousel', () => {
         .querySelectorAll('.el-carousel__item')[1]
         .classList.contains('is-active')
     ).toBeTruthy()
-    done()
   })
 
-  it('reset timer', async (done) => {
+  it('reset timer', async () => {
     wrapper = createComponent({
       interval: 500,
     })
@@ -97,10 +95,9 @@ describe('Carousel', () => {
     await nextTick()
     await wait(700)
     expect(items[1].classList.contains('is-active')).toBeTruthy()
-    done()
   })
 
-  it('change', async (done) => {
+  it('change', async () => {
     const state = reactive({
       val: -1,
       oldVal: -1,
@@ -118,18 +115,16 @@ describe('Carousel', () => {
     await wait(50)
     expect(state.val).toBe(1)
     expect(state.oldVal).toBe(0)
-    done()
   })
 
-  it('label', async (done) => {
+  it('label', async () => {
     wrapper = createComponent(undefined, 3, true)
     await nextTick()
     expect(wrapper.find('.el-carousel__button span').text()).toBe('1')
-    done()
   })
 
   describe('manual control', () => {
-    it('hover', async (done) => {
+    it('hover', async () => {
       wrapper = createComponent({
         autoplay: false,
       })
@@ -144,11 +139,10 @@ describe('Carousel', () => {
           .querySelectorAll('.el-carousel__item')[1]
           .classList.contains('is-active')
       ).toBeTruthy()
-      done()
     })
   })
 
-  it('card', async (done) => {
+  it('card', async () => {
     wrapper = createComponent(
       {
         autoplay: false,
@@ -172,7 +166,6 @@ describe('Carousel', () => {
     await items[6].click()
     await wait()
     expect(items[6].classList.contains('is-active')).toBeTruthy()
-    done()
   })
 
   it('vertical direction', () => {
@@ -189,7 +182,7 @@ describe('Carousel', () => {
     expect(items[0].style.transform.includes('translateY')).toBeTruthy()
   })
 
-  it('pause auto play on hover', async (done) => {
+  it('pause auto play on hover', async () => {
     wrapper = createComponent({
       interval: 50,
       'pause-on-hover': false,
@@ -201,6 +194,31 @@ describe('Carousel', () => {
     await nextTick()
     await wait(60)
     expect(items[1].classList.contains('is-active')).toBeTruthy()
-    done()
+  })
+  it('should guarantee order of indicators', async () => {
+    const data = reactive([1, 2, 3, 4])
+    wrapper = mount({
+      setup() {
+        return () => (
+          <div>
+            <Carousel>
+              {data.map((value) => (
+                <CarouselItem label={value} key={value}>
+                  {value}
+                </CarouselItem>
+              ))}
+            </Carousel>
+          </div>
+        )
+      },
+    })
+    await nextTick()
+
+    data.splice(1, 0, 5)
+    await nextTick()
+    const indicators = wrapper.findAll('.el-carousel__button')
+    data.forEach((value, index) => {
+      expect(indicators[index].element.textContent).toEqual(value.toString())
+    })
   })
 })

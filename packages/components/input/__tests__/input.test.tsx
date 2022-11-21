@@ -2,6 +2,7 @@ import { nextTick, ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import defineGetter from '@element-plus/test-utils/define-getter'
+import { ElFormItem as FormItem } from '@element-plus/components/form'
 import Input from '../src/input.vue'
 import type { CSSProperties } from 'vue'
 import type { InputAutoSize, InputInstance, InputProps } from '../src/input'
@@ -16,7 +17,6 @@ describe('Input.vue', () => {
     const handleFocus = vi.fn()
     const wrapper = mount(() => (
       <Input
-        // @ts-expect-error native attribute
         minlength={3}
         maxlength={5}
         placeholder="请输入内容"
@@ -59,7 +59,6 @@ describe('Input.vue', () => {
       const wrapper = mount(() => (
         <Input
           class="test-exceed"
-          // @ts-expect-error native html attribute
           maxlength="4"
           showWordLimit
           v-model={inputVal.value}
@@ -97,7 +96,6 @@ describe('Input.vue', () => {
       const wrapper = mount(() => (
         <Input
           type="textarea"
-          // @ts-expect-error native html attribute
           maxlength="4"
           showWordLimit
           v-model={inputVal.value}
@@ -148,13 +146,7 @@ describe('Input.vue', () => {
   })
 
   test('rows', () => {
-    const wrapper = mount(() => (
-      <Input
-        type="textarea"
-        // @ts-expect-error native html attribute
-        rows={3}
-      />
-    ))
+    const wrapper = mount(() => <Input type="textarea" rows={3} />)
     expect(wrapper.find('textarea').element.rows).toEqual(3)
   })
 
@@ -203,7 +195,6 @@ describe('Input.vue', () => {
           class="test-text"
           type="text"
           v-model={input1.value}
-          // @ts-expect-error native html attribute
           maxlength="10"
           showWordLimit={show.value}
         />
@@ -211,7 +202,6 @@ describe('Input.vue', () => {
           class="test-textarea"
           type="textarea"
           v-model={input2.value}
-          // @ts-expect-error native html attribute
           maxlength="10"
           showWordLimit
         />
@@ -219,7 +209,6 @@ describe('Input.vue', () => {
           class="test-password"
           type="password"
           v-model={input3.value}
-          // @ts-expect-error native html attribute
           maxlength="10"
           showWordLimit
         />
@@ -227,7 +216,6 @@ describe('Input.vue', () => {
           class="test-initial-exceed"
           type="text"
           v-model={input4.value}
-          // @ts-expect-error native html attribute
           maxlength="2"
           showWordLimit
         />
@@ -503,6 +491,52 @@ describe('Input.vue', () => {
     await icon.trigger('click')
     const d0 = icon.find('path').element.getAttribute('d')
     expect(d !== d0).toBeTruthy()
+  })
+
+  describe('form item accessibility integration', () => {
+    test('automatic id attachment', async () => {
+      const wrapper = mount(() => (
+        <FormItem label="Foobar" data-test-ref="item">
+          <Input data-test-ref="input" />
+        </FormItem>
+      ))
+
+      await nextTick()
+      const formItem = wrapper.find('[data-test-ref="item"]')
+      const input = wrapper.find('[data-test-ref="input"]')
+      const formItemLabel = formItem.find('.el-form-item__label')
+      expect(formItem.attributes().role).toBeFalsy()
+      expect(formItemLabel.attributes().for).toBe(input.attributes().id)
+    })
+
+    test('specified id attachment', async () => {
+      const wrapper = mount(() => (
+        <FormItem label="Foobar" data-test-ref="item">
+          <Input id="foobar" data-test-ref="input" />
+        </FormItem>
+      ))
+
+      await nextTick()
+      const formItem = wrapper.find('[data-test-ref="item"]')
+      const input = wrapper.find('[data-test-ref="input"]')
+      const formItemLabel = formItem.find('.el-form-item__label')
+      expect(formItem.attributes().role).toBeFalsy()
+      expect(input.attributes().id).toBe('foobar')
+      expect(formItemLabel.attributes().for).toBe(input.attributes().id)
+    })
+
+    test('form item role is group when multiple inputs', async () => {
+      const wrapper = mount(() => (
+        <FormItem label="Foobar" data-test-ref="item">
+          <Input data-test-ref="input1" />
+          <Input data-test-ref="input2" />
+        </FormItem>
+      ))
+
+      await nextTick()
+      const formItem = wrapper.find('[data-test-ref="item"]')
+      expect(formItem.attributes().role).toBe('group')
+    })
   })
 
   // TODO: validateEvent & input containes select cases should be added after the rest components finished

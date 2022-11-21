@@ -1,14 +1,16 @@
-# This workflow runs on target, so there is no need to worry about secrets
-
 name: 🧪 Test SSR
 
 on: pull_request
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
-  # Build successfully, start deployment
   test:
     name: SSR rendering test
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -17,31 +19,32 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
-        with:
-          version: latest
 
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: 16
 
-      - name: Cache ~/.pnpm-store
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-pnpm-store
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ matrix.node-version }}-test-${{ env.cache-name }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.node-version }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-${{ matrix.node-version }}-test-
-            ${{ runner.os }}-
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
         run: pnpm i --frozen-lockfile
 
       - name: Local build
         run: pnpm build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
-      - name: Do test
+      - name: Test
         run: pnpm test:ssr

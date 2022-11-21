@@ -1,3 +1,8 @@
+/**
+ * @description:
+ * @Author:
+ * @Date: 2022-11-21 11:36:05
+ */
 import consola from 'consola'
 import { REPO_BRANCH, REPO_PATH } from '@element-plus/build-constants'
 import { docsDirName } from '@element-plus/build-utils'
@@ -50,6 +55,7 @@ export const config: UserConfig = {
   description: 'a Vue 3 based component library for designers and developers',
   lastUpdated: true,
   head,
+  // base: '/sh-element-plus/',
   themeConfig: {
     repo: REPO_PATH,
     docsBranch: REPO_BRANCH,

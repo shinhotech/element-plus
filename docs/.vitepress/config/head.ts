@@ -75,6 +75,13 @@ export const head: HeadConfig[] = [
   ],
   [
     'script',
+    {
+      async: 'true',
+      src: 'https://sdk.amazonaws.com/js/aws-sdk-2.1251.0.min.js',
+    },
+  ],
+  [
+    'script',
     {},
     `;(() => {
       window.supportedLangs = ${JSON.stringify(languages)}

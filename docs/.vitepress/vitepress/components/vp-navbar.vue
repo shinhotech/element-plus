@@ -1,3 +1,8 @@
+<!--
+ * @description:
+ * @Author:
+ * @Date: 2022-11-17 14:37:55
+-->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { inBrowser, useData } from 'vitepress'
@@ -9,6 +14,7 @@ import VPNavbarThemeToggler from './navbar/vp-theme-toggler.vue'
 import VPNavbarTranslation from './navbar/vp-translation.vue'
 import VPNavbarSocialLinks from './navbar/vp-social-links.vue'
 import VPNavbarHamburger from './navbar/vp-hamburger.vue'
+import VPResetStyle from './navbar/vp-reset-style.vue'
 
 defineProps<{
   fullScreen: boolean
@@ -48,6 +54,9 @@ const currentLink = computed(() => {
         <VPNavbarMenu class="menu" />
         <VPNavbarThemeToggler v-if="themeEnabled" class="theme-toggler" />
         <VPNavbarTranslation class="translation" />
+        <ClientOnly>
+          <VPResetStyle />
+        </ClientOnly>
         <VPNavbarSocialLinks class="social-links" />
         <VPNavbarHamburger
           :active="fullScreen"

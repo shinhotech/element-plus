@@ -13,6 +13,7 @@ export const useSidebar = () => {
       hasSidebar: computed(() => false),
     }
   }
+  // 顶部 & 侧边导航数据处理
   const sidebars = computed(() => {
     if (page.value.frontmatter.sidebar === false) return []
     const sidebars = getSidebarConfig(

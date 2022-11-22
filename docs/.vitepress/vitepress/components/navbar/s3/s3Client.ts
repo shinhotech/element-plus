@@ -63,7 +63,7 @@ export const s3FileDownload = () => {
     return new Promise((resolve, reject) => {
       s3.listObjectsV2(aParams, (err, data) => {
         if (!err) {
-          console.log('listObjectsV2===', data)
+          // console.log('listObjectsV2===', data)
           // 获取存储的数据信息
           const styleList: string[] = []
           const contents = data.Contents

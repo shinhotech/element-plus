@@ -23,6 +23,9 @@ function getComponentsSideBar() {
 // return sidebar with language configs.
 // this might create duplicated data but the overhead is ignorable
 const getSidebars = () => {
+  // console.log('顶部====', (getGuideSidebar() as any)['en-US'][0]?.children)
+  // console.log('侧边====', getComponentsSideBar()['en-US'][0].children)
+
   return {
     '/guide/': getGuideSidebar(),
     '/component/': getComponentsSideBar(),

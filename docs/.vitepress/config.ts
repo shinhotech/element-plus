@@ -65,8 +65,8 @@ export const config: UserConfig = {
     editLinkText: 'Edit this page on GitHub',
     lastUpdated: 'Last Updated',
 
-    logo: '/images/element-plus-logo.svg',
-    logoSmall: '/images/element-plus-logo-small.svg',
+    logo: '/sh-element-plus/images/element-plus-logo.png',
+    logoSmall: '/sh-element-plus/images/element-plus-logo-small.svg',
     sidebars,
     nav,
     agolia: {

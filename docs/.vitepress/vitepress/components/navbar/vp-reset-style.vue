@@ -28,7 +28,7 @@ const themeCascaderRef: Ref<any | null> = ref(null)
 // 获取主题样式列表
 const getThemeList = async () => {
   const list: any = await fileDownload()
-  console.log('list===', list)
+  // console.log('list===', list)
 
   // 根据规则匹配地址, 拼成级联数据 ==> element-plus/style/element-plus-${version}-${project}-reset.css
   if (list) {

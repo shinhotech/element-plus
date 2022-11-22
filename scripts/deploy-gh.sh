@@ -4,11 +4,6 @@
  # @Author:
  # @Date: 2022-11-21 15:38:02
 ###
-###
- # @description:
- # @Author:
- # @Date: 2022-11-17 15:11:50
-###
 
 # 确保脚本抛出遇到的错误
 set -e
@@ -27,6 +22,6 @@ git add -A
 git commit -m 'deploy'
 
 # 如果发布到 https://<USERNAME>.github.io/<REPO>
-git push -f git@github.com:shinhotech/sh-element-plus.git master:sh-gh-pages
+git push -f git@github.com:shinhotech/sh-element-plus.git master:gh-pages
 
 cd -

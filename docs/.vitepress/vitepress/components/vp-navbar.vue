@@ -30,10 +30,12 @@ const currentLink = computed(() => {
     return `/${page.value?.frontmatter?.lang || ''}/`
   }
   const existLangIndex = theme.value.langs.findIndex((lang) =>
-    window?.location?.pathname.startsWith(`/${lang}`)
+    window?.location?.pathname.startsWith(`/sh-element-plus/${lang}`)
   )
 
-  return existLangIndex === -1 ? '/' : `/${theme.value.langs[existLangIndex]}/`
+  return existLangIndex === -1
+    ? '/'
+    : `/sh-element-plus/${theme.value.langs[existLangIndex]}/`
 })
 </script>
 
@@ -44,7 +46,7 @@ const currentLink = computed(() => {
         <a :href="currentLink">
           <img
             class="logo"
-            src="/images/element-plus-logo.svg"
+            src="/images/element-plus-logo.png"
             alt="Element Plus Logo"
           />
         </a>

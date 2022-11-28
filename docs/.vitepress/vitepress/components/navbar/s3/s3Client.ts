@@ -33,7 +33,7 @@ export function S3ClientUpload() {
       return
     }
     const uploadParams = {
-      Bucket: 's3-225-itsh-mpc-uat-dev', // 储存桶名称
+      Bucket: 's3-228-itsh-dpl-dev', // 储存桶名称
       Key: `element-plus/style/${genFileName(fileInfo)}`, // 储存地址及文件名
       Body: file, // 文件流
       ContentType: file.type,
@@ -56,7 +56,7 @@ export const s3FileDownload = () => {
   const AWS = (window as any).AWS
   const s3 = new AWS.S3(params)
   const aParams: any = {
-    Bucket: 's3-225-itsh-mpc-uat-dev',
+    Bucket: 's3-228-itsh-dpl-dev',
   }
 
   return () => {
@@ -67,8 +67,7 @@ export const s3FileDownload = () => {
           // 获取存储的数据信息
           const styleList: string[] = []
           const contents = data.Contents
-          const origin =
-            'https://s3-225-itsh-mpc-uat-dev.s3.cn-north-1.amazonaws.com.cn'
+          const origin = 'https://cdn-fe.shinhoglobal.com'
           contents.forEach((c) => {
             styleList.push(`${origin}/${c.Key}`)
           })
@@ -90,7 +89,7 @@ export const s3FileDelete = () => {
 
   return (key: string) => {
     const aParams: any = {
-      Bucket: 's3-225-itsh-mpc-uat-dev',
+      Bucket: 's3-228-itsh-dpl-dev',
       Key: key, // 储存地址及文件名
     }
     s3.deleteObject(aParams, (err, data) => {

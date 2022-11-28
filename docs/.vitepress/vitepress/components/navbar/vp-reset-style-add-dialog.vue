@@ -18,7 +18,7 @@ import type {
 } from 'element-plus'
 
 const clientUpload = S3ClientUpload()
-const deleteFile = s3FileDelete()
+// const deleteFile = s3FileDelete()
 const emit = defineEmits(['confirm'])
 const props = defineProps({
   curTheme: {
@@ -139,10 +139,10 @@ const submitForm = async () => {
       // 编辑 ==> 需要把前一条的文件删除，重新上传
       if (others.isEdit) {
         // 删除
-        const key = others.editTheme?.split('/element-plus/style/')[1]
+        // const key = others.editTheme?.split('/element-plus/style/')[1]
 
-        console.log('key====', key)
-        deleteFile(`element-plus/style/${key}`)
+        // console.log('key====', key)
+        // deleteFile(`element-plus/style/${key}`)
         others.isEdit = false
       }
       // 通过后端获取到上传参数

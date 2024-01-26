@@ -16,7 +16,7 @@
   <meta name="msapplication-TileColor" content="#409eff">
   <meta name="msapplication-config" content="/browserconfig.xml">
   <script>window.supportedLangs=["zh-CN"];</script>
-  <script>(()=>{const o=window.supportedLangs,e="preferred_lang",r="zh-CN",s={zh:"zh-CN"};let t=localStorage.getItem(e)||navigator.language;const n=s[t]||(o.includes(t)?t:r);if(localStorage.setItem(e,n),t=n,!location.pathname.startsWith(`/${t}`)){const a=[`/${t}`].concat(location.pathname.split("/").slice(2)).join("/");location.pathname=a.endsWith(".html")||a.endsWith("/")?a:a.concat("/")}navigator&&navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:"LANG",lang:t})})();</script>
+  <script>(()=>{const o=window.supportedLangs,e="preferred_lang",n="zh-CN",r={zh:"zh-CN"};let a=localStorage.getItem(e)||navigator.language;const t=r[a]||(o.includes(a)?a:n);if(localStorage.setItem(e,t),a=t,!location.pathname.startsWith(`/${a}`)){const s=[`/${a}`].concat(location.pathname.split("/").slice(2)).join("/")}navigator&&navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:"LANG",lang:a})})();</script>
   <script async="true" src="https://www.googletagmanager.com/gtag/js?id=UA-175337989-1"></script>
   <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/sw.js").then(function(o){console.log(o)}).catch(function(o){console.log(o)});</script>
   <script async="true">window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-175337989-1");</script>

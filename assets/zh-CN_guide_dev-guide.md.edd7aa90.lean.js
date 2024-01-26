@@ -1,0 +1,1 @@
+import{o as e,c as t}from"./app.97ab0c8c.js";const c='{"title":"\u672C\u5730\u5F00\u53D1","description":"","frontmatter":{"title":"\u672C\u5730\u5F00\u53D1","lang":"zh-CN"},"headers":[],"relativePath":"zh-CN/guide/dev-guide.md","lastUpdated":null}',a={},d=Object.assign(a,{__name:"dev-guide",setup(n){return(r,s)=>(e(),t("div"))}});export{c as __pageData,d as default};
